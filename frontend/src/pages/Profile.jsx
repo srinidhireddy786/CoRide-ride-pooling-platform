@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import authAPI from '../services/authAPI';
 import rideAPI from '../services/rideAPI';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotifications } from '../contexts/NotificationContext';
 import { User, Award, ShieldCheck, Star, Plus, Trash2, ShieldAlert, CheckCircle, Car, Bike, PlusCircle, CreditCard } from 'lucide-react';
 
 const Profile = () => {
   const { user, updateProfile } = useAuth();
+  const { addToast } = useNotifications();
   
   // Profile update state
   const [name, setName] = useState(user?.name || '');
@@ -93,9 +95,10 @@ const Profile = () => {
     if (!window.confirm("Are you sure you want to delete this vehicle? Any active rides using this vehicle will not be deleteable unless cancelled.")) return;
     try {
       await rideAPI.deleteVehicle(vehicleId);
+      addToast('Success', 'Vehicle deleted successfully.', 'success');
       loadVehicles();
     } catch (err) {
-      alert("Failed to delete vehicle. It may be linked to published rides.");
+      addToast('Error', 'Failed to delete vehicle. It may be linked to active published rides.', 'error');
     }
   };
 
@@ -396,7 +399,7 @@ const styles = {
     display: 'flex',
     gap: '1.5rem',
     marginBottom: '2rem',
-    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    backgroundColor: 'var(--card-inner-bg)',
     padding: '1rem',
     borderRadius: 'var(--radius-md)',
     border: '1px solid var(--border-color)',
@@ -431,7 +434,7 @@ const styles = {
     alignItems: 'center',
     gap: '1rem',
     padding: '0.75rem 1rem',
-    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    backgroundColor: 'var(--card-inner-bg)',
     borderRadius: 'var(--radius-sm)',
     border: '1px solid var(--border-color)',
   },

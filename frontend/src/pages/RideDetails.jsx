@@ -2,13 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import rideAPI from '../services/rideAPI';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotifications } from '../contexts/NotificationContext';
 import RouteMap from '../components/RouteMap';
+import LoadingFacts from '../components/LoadingFacts';
 import { MapPin, Calendar, Users, IndianRupee, MessageSquare, ShieldCheck, CheckCircle2, Star, Award, ChevronRight, Check } from 'lucide-react';
 
 const RideDetails = () => {
   const { rideId } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { addToast } = useNotifications();
 
   const [ride, setRide] = useState(null);
   const [participants, setParticipants] = useState([]);
@@ -68,9 +71,10 @@ const RideDetails = () => {
     try {
       setLoading(true);
       await rideAPI.requestRide(rideId);
+      addToast('Request Sent', 'Your request to join this ride has been submitted.', 'success');
       await loadRideDetails();
     } catch (err) {
-      alert(err.response?.data?.detail || 'Failed to send request.');
+      addToast('Error', err.response?.data?.detail || 'Failed to send request.', 'error');
       setLoading(false);
     }
   };
@@ -80,9 +84,10 @@ const RideDetails = () => {
     try {
       setLoading(true);
       await rideAPI.updateRequestStatus(myRequest.id, 'cancelled');
+      addToast('Request Cancelled', 'Your request to join this ride has been cancelled.', 'info');
       await loadRideDetails();
     } catch (err) {
-      alert(err.response?.data?.detail || 'Failed to cancel request.');
+      addToast('Error', err.response?.data?.detail || 'Failed to cancel request.', 'error');
       setLoading(false);
     }
   };
@@ -91,9 +96,10 @@ const RideDetails = () => {
     try {
       setLoading(true);
       await rideAPI.updateRideStatus(rideId, 'started');
+      addToast('Ride Started', 'The ride has officially started!', 'success');
       await loadRideDetails();
     } catch (err) {
-      alert(err.response?.data?.detail || 'Failed to start ride.');
+      addToast('Error', err.response?.data?.detail || 'Failed to start ride.', 'error');
       setLoading(false);
     }
   };
@@ -103,9 +109,10 @@ const RideDetails = () => {
     try {
       setLoading(true);
       await rideAPI.updateRideStatus(rideId, 'cancelled');
+      addToast('Ride Cancelled', 'The ride has been cancelled.', 'info');
       await loadRideDetails();
     } catch (err) {
-      alert(err.response?.data?.detail || 'Failed to cancel ride.');
+      addToast('Error', err.response?.data?.detail || 'Failed to cancel ride.', 'error');
       setLoading(false);
     }
   };
@@ -114,10 +121,10 @@ const RideDetails = () => {
     try {
       setLoading(true);
       const res = await rideAPI.confirmCompletion(rideId);
-      alert(res.detail + (res.ride_status === 'completed' ? ' Ride is now fully completed!' : ''));
+      addToast('Status Update', res.detail + (res.ride_status === 'completed' ? ' Ride is now fully completed!' : ''), 'info');
       await loadRideDetails();
     } catch (err) {
-      alert(err.response?.data?.detail || 'Failed to confirm completion.');
+      addToast('Error', err.response?.data?.detail || 'Failed to confirm completion.', 'error');
       setLoading(false);
     }
   };
@@ -132,6 +139,7 @@ const RideDetails = () => {
         comment: comment
       });
       setRatingSuccess(`Successfully rated ${ratingTargetName}!`);
+      addToast('Success', `Successfully rated ${ratingTargetName}!`, 'success');
       setRatedUsers(prev => ({ ...prev, [ratingTargetId]: true }));
       setRatingTargetId('');
       setComment('');
@@ -141,16 +149,12 @@ const RideDetails = () => {
       loadRideDetails();
       setTimeout(() => setRatingSuccess(''), 3000);
     } catch (err) {
-      alert(err.response?.data?.detail || 'Failed to submit rating.');
+      addToast('Error', err.response?.data?.detail || 'Failed to submit rating.', 'error');
     }
   };
 
   if (loading && !ride) {
-    return (
-      <div style={styles.loaderContainer}>
-        <div style={styles.spinner} />
-      </div>
-    );
+    return <LoadingFacts fullPage={false} />;
   }
 
   if (error || !ride) {
@@ -297,7 +301,7 @@ const RideDetails = () => {
                     </>
                   )}
                   {ride.status === 'completed' && (
-                    <div style={styles.infoText}>This ride has been completed. Review your passengers below!</div>
+                    <div style={styles.infoText}>This ride has been completed. Review your passengers!</div>
                   )}
                   {ride.status === 'cancelled' && (
                     <div style={styles.infoTextError}>This ride was cancelled.</div>
@@ -586,7 +590,7 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'flex-end',
-    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    backgroundColor: 'var(--card-inner-bg)',
     border: '1px solid var(--border-color)',
     borderRadius: 'var(--radius-md)',
     padding: '0.75rem 1.25rem',
@@ -620,7 +624,7 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     marginBottom: '2rem',
-    backgroundColor: 'rgba(255,255,255,0.01)',
+    backgroundColor: 'var(--card-inner-bg)',
     padding: '1.25rem',
     borderRadius: 'var(--radius-md)',
     border: '1px solid var(--border-color)',
@@ -634,7 +638,7 @@ const styles = {
     width: '36px',
     height: '36px',
     borderRadius: '50%',
-    backgroundColor: 'rgba(255,255,255,0.03)',
+    backgroundColor: 'var(--bg-tertiary)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -660,11 +664,11 @@ const styles = {
   },
   routeConnector: {
     width: '2px',
-    height: '20px',
-    backgroundColor: 'var(--border-color)',
+    height: '24px',
+    background: 'linear-gradient(to bottom, var(--success) 0%, var(--danger) 100%)',
     marginLeft: '17px',
-    marginTop: '2px',
-    marginBottom: '2px',
+    marginTop: '4px',
+    marginBottom: '4px',
   },
   panelTitle: {
     fontSize: '1.25rem',
@@ -705,7 +709,7 @@ const styles = {
     alignItems: 'center',
     width: '100%',
     padding: '0.75rem 1rem',
-    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    backgroundColor: 'var(--card-inner-bg)',
     border: '1px solid var(--border-color)',
     borderRadius: 'var(--radius-sm)',
   },
@@ -796,7 +800,7 @@ const styles = {
   lockedBox: {
     padding: '1.5rem 1rem',
     textAlign: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.01)',
+    backgroundColor: 'var(--card-inner-bg)',
     border: '1px dashed var(--border-color)',
     borderRadius: 'var(--radius-sm)',
   },

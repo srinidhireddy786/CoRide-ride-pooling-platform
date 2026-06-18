@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { NotificationProvider, useNotifications } from './contexts/NotificationContext';
 import Navbar from './components/Navbar';
@@ -37,16 +37,14 @@ const ToastOverlay = () => {
   );
 };
 
+import LoadingFacts from './components/LoadingFacts';
+
 // Route protector wrapper
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div style={styles.spinnerContainer}>
-        <div style={styles.spinner} />
-      </div>
-    );
+    return <LoadingFacts fullPage={true} />;
   }
 
   return isAuthenticated ? children : <Navigate to="/login" replace />;
@@ -54,10 +52,11 @@ const ProtectedRoute = ({ children }) => {
 
 // Main Layout Wrapper
 const AppLayout = ({ children }) => {
+  const location = useLocation();
   return (
     <div className="app-container">
       <Navbar />
-      <main className="main-content animate-fade">
+      <main key={location.pathname} className="main-content animate-fade">
         {children}
       </main>
       <ToastOverlay />

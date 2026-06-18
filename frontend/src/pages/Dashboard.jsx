@@ -2,10 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import rideAPI from '../services/rideAPI';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotifications } from '../contexts/NotificationContext';
 import { Calendar, Users, MapPin, Check, X, ShieldAlert, Star, ShieldCheck, MessageSquare, ExternalLink } from 'lucide-react';
+import LoadingFacts from '../components/LoadingFacts';
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const { addToast } = useNotifications();
   
   const [publishedRides, setPublishedRides] = useState([]);
   const [bookings, setBookings] = useState([]);
@@ -27,37 +30,36 @@ const Dashboard = () => {
 
       setPublishedRides(myPublished);
       setBookings(myBookings);
-      setIncomingRequests(incoming.filter(req => req.status === 'pending'));
+      
+      // Only display incoming requests that are pending and for active rides
+      const activePending = incoming.filter(
+        (req) => req.status === 'pending' && req.ride.status !== 'completed' && req.ride.status !== 'cancelled'
+      );
+      setIncomingRequests(activePending);
+      setLoading(false);
     } catch (err) {
-      console.error(err);
-      setError('Failed to load dashboard data.');
-    } finally {
+      setError('Failed to load dashboard data. Please reload page.');
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (user) {
-      loadDashboardData();
-    }
-  }, [user]);
+    loadDashboardData();
+  }, []);
 
   const handleRequestAction = async (requestId, status) => {
     try {
       await rideAPI.updateRequestStatus(requestId, status);
+      addToast('Success', `Booking request has been ${status}.`, 'success');
       // Reload dashboard stats
       loadDashboardData();
     } catch (err) {
-      alert(err.response?.data?.detail || 'Failed to update request.');
+      addToast('Error', err.response?.data?.detail || 'Failed to update request.', 'error');
     }
   };
 
   if (loading) {
-    return (
-      <div style={styles.loaderContainer}>
-        <div style={styles.spinner} />
-      </div>
-    );
+    return <LoadingFacts fullPage={false} />;
   }
 
   return (
@@ -65,22 +67,35 @@ const Dashboard = () => {
       {/* Stats Widgets Header */}
       <div style={styles.statsHeader} className="glass-panel">
         <div style={styles.welcomeBox}>
-          <h2>Dashboard</h2>
-          <p style={{ color: 'var(--text-secondary)' }}>Welcome back, {user.name}!</p>
+          <h2 style={{ background: 'var(--accent-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', display: 'inline-block' }}>Dashboard</h2>
+          <p style={{ color: 'var(--text-secondary)', fontWeight: 500 }}>Welcome back, {user.name}!</p>
         </div>
         <div style={styles.statsGrid}>
-          <div style={styles.statCard}>
-            <span style={styles.statLabel}>Reliability Score</span>
+          <div style={{...styles.statCard, padding: '1rem', borderRadius: 'var(--radius-md)', background: 'var(--card-inner-bg)', border: '1px solid var(--card-inner-border)', minWidth: '160px', alignItems: 'flex-start'}}>
+            <span style={styles.statLabel}>Reliability</span>
             <div style={styles.statValue}>
-              <ShieldCheck size={24} color="var(--accent-secondary)" />
+              <ShieldCheck size={20} color="var(--success)" />
               <span>{user.reliability_score.toFixed(0)}%</span>
             </div>
+            <div style={styles.progressBarBg}>
+              <div style={{...styles.progressBarFill, width: `${user.reliability_score}%`}} />
+            </div>
           </div>
-          <div style={styles.statCard}>
-            <span style={styles.statLabel}>Average Rating</span>
+          <div style={{...styles.statCard, padding: '1rem', borderRadius: 'var(--radius-md)', background: 'var(--card-inner-bg)', border: '1px solid var(--card-inner-border)', minWidth: '160px', alignItems: 'flex-start'}}>
+            <span style={styles.statLabel}>Avg Rating</span>
             <div style={styles.statValue}>
-              <Star size={24} fill="var(--warning)" color="var(--warning)" />
+              <Star size={20} fill="var(--warning)" color="var(--warning)" />
               <span>{user.average_rating > 0 ? user.average_rating.toFixed(1) : "N/A"}</span>
+            </div>
+            <div style={{ display: 'flex', gap: '0.15rem', marginTop: '0.4rem' }}>
+              {[1, 2, 3, 4, 5].map((s) => (
+                <Star 
+                  key={s} 
+                  size={12} 
+                  fill={s <= Math.round(user.average_rating || 5) ? "var(--warning)" : "transparent"} 
+                  color="var(--warning)" 
+                />
+              ))}
             </div>
           </div>
         </div>
@@ -463,7 +478,7 @@ const styles = {
     justifyContent: 'space-between',
     fontSize: '0.8rem',
     color: 'var(--text-secondary)',
-    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    backgroundColor: 'var(--card-inner-bg)',
     padding: '0.5rem',
     borderRadius: 'var(--radius-sm)',
     border: '1px solid var(--border-color)',
@@ -516,6 +531,19 @@ const styles = {
     borderTopColor: 'var(--accent-primary)',
     borderRadius: '50%',
     animation: 'spin 1s linear infinite',
+  },
+  progressBarBg: {
+    width: '100%',
+    height: '6px',
+    backgroundColor: 'var(--bg-tertiary)',
+    borderRadius: '3px',
+    overflow: 'hidden',
+    marginTop: '0.5rem',
+  },
+  progressBarFill: {
+    height: '100%',
+    background: 'linear-gradient(90deg, var(--success) 0%, var(--accent-secondary) 100%)',
+    borderRadius: '3px',
   },
 };
 

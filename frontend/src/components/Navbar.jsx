@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
-import { Bell, MapPin, User, LogOut, Calendar, PlusCircle, Search, Menu, X, Route, Sun, Moon } from 'lucide-react';
+import { Bell, MapPin, User, LogOut, Calendar, PlusCircle, Search, Menu, X, Route, Sun, Moon, History } from 'lucide-react';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -19,10 +19,14 @@ const Navbar = () => {
     }
   }, [theme]);
 
+  const [animateSpin, setAnimateSpin] = useState(false);
+
   const toggleTheme = () => {
+    setAnimateSpin(true);
     const nextTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(nextTheme);
     localStorage.setItem('coride_theme', nextTheme);
+    setTimeout(() => setAnimateSpin(false), 400);
   };
 
   const location = useLocation();
@@ -50,20 +54,20 @@ const Navbar = () => {
 
         {/* Desktop Navigation Links */}
         <div style={styles.navLinks}>
+          <Link to="/dashboard" style={isActive('/dashboard') ? styles.activeLink : styles.link}>
+            <Calendar size={16} /> Dashboard
+          </Link>
           <Link to="/" style={isActive('/') ? styles.activeLink : styles.link}>
             <Search size={16} /> Search Rides
           </Link>
           <Link to="/publish" style={isActive('/publish') ? styles.activeLink : styles.link}>
             <PlusCircle size={16} /> Publish Ride
           </Link>
-          <Link to="/dashboard" style={isActive('/dashboard') ? styles.activeLink : styles.link}>
-            <Calendar size={16} /> Dashboard
-          </Link>
           <Link to="/history" style={isActive('/history') ? styles.activeLink : styles.link}>
-            <User size={16} /> History
+            <History size={16} /> History
           </Link>
           <Link to="/profile" style={isActive('/profile') ? styles.activeLink : styles.link}>
-            Profile
+            <User size={16} /> Profile
           </Link>
         </div>
 
@@ -130,6 +134,7 @@ const Navbar = () => {
           <button
             onClick={toggleTheme}
             style={{ ...styles.actionBtn, marginRight: '0.2rem' }}
+            className={animateSpin ? 'theme-spin-click' : ''}
             title={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
           >
             {theme === 'dark' ? <Sun size={20} color="var(--warning)" /> : <Moon size={20} color="var(--accent-primary)" />}
@@ -153,14 +158,14 @@ const Navbar = () => {
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
         <div style={styles.mobileDrawer} className="glass-panel">
+          <Link to="/dashboard" onClick={() => setMobileMenuOpen(false)} style={styles.mobileLink}>
+            Dashboard
+          </Link>
           <Link to="/" onClick={() => setMobileMenuOpen(false)} style={styles.mobileLink}>
             Search Rides
           </Link>
           <Link to="/publish" onClick={() => setMobileMenuOpen(false)} style={styles.mobileLink}>
             Publish Ride
-          </Link>
-          <Link to="/dashboard" onClick={() => setMobileMenuOpen(false)} style={styles.mobileLink}>
-            Dashboard
           </Link>
           <Link to="/history" onClick={() => setMobileMenuOpen(false)} style={styles.mobileLink}>
             History
@@ -184,8 +189,8 @@ const styles = {
     left: 0,
     right: 0,
     height: '70px',
-    background: 'rgba(10, 11, 16, 0.8)',
-    backdropFilter: 'blur(16px)',
+    background: 'var(--glass-bg)',
+    backdropFilter: 'var(--glass-blur)',
     borderBottom: '1px solid var(--border-color)',
     zIndex: 1000,
     display: 'flex',

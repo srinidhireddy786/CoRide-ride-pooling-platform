@@ -234,7 +234,7 @@ const styles = {
     flexDirection: 'column',
     gap: '0.5rem',
     padding: '0.75rem',
-    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+    backgroundColor: 'var(--card-inner-bg)',
     borderRadius: 'var(--radius-sm)',
     border: '1px solid var(--border-color)',
   },

@@ -3,6 +3,7 @@ import rideAPI from '../services/rideAPI';
 import RideCard from '../components/RideCard';
 import RouteMap from '../components/RouteMap';
 import { Search, MapPin, Calendar, Compass, List, AlertCircle } from 'lucide-react';
+import LoadingFacts from '../components/LoadingFacts';
 
 const SearchRide = () => {
   // Coordinates and text address states
@@ -205,7 +206,7 @@ const SearchRide = () => {
       </div>
 
       <div style={styles.mainGrid}>
-        {/* Left Column: Search Form and Route Display Map */}
+        {/* Left Column: Search Form and Results */}
         <div style={styles.leftCol}>
           <div className="glass-panel" style={styles.searchFormPanel}>
             <form onSubmit={handleSearch}>
@@ -367,22 +368,6 @@ const SearchRide = () => {
             </form>
           </div>
 
-          {/* Route Map Viewer (Interactive Mode) */}
-          <div style={styles.mapContainer}>
-            <RouteMap
-              mode="interactive"
-              sourceLat={source.lat}
-              sourceLng={source.lng}
-              destinationLat={destination.lat}
-              destinationLng={destination.lng}
-              onChangeCoords={handleMapCoordsChange}
-              height="280px"
-            />
-          </div>
-        </div>
-
-        {/* Right Column: Search Results List */}
-        <div style={styles.rightCol}>
           <div style={styles.feedHeader}>
             <h3 style={styles.feedTitle}>
               <List size={20} color="var(--accent-primary)" />
@@ -392,10 +377,7 @@ const SearchRide = () => {
           </div>
 
           {loading ? (
-            <div style={styles.loaderContainer}>
-              <div style={styles.spinner} />
-              <p style={{ marginTop: '1rem', color: 'var(--text-secondary)' }}>Resolving locations & matching routes...</p>
-            </div>
+            <LoadingFacts fullPage={false} />
           ) : !hasSearched ? (
             <div className="glass-panel" style={styles.emptyCard}>
               <Compass size={32} color="var(--accent-primary)" />
@@ -419,6 +401,21 @@ const SearchRide = () => {
               ))}
             </div>
           )}
+        </div>
+
+        {/* Right Column: Route Map Viewer */}
+        <div style={styles.rightCol}>
+          <div style={styles.mapContainer}>
+            <RouteMap
+              mode="interactive"
+              sourceLat={source.lat}
+              sourceLng={source.lng}
+              destinationLat={destination.lat}
+              destinationLng={destination.lng}
+              onChangeCoords={handleMapCoordsChange}
+              height="520px"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -452,7 +449,7 @@ const styles = {
   leftCol: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '1.5rem',
+    gap: '2rem',
   },
   searchFormPanel: {
     padding: '1.5rem',
@@ -514,7 +511,10 @@ const styles = {
   rightCol: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '1rem',
+    position: 'sticky',
+    top: '100px',
+    height: 'fit-content',
+    zIndex: 5,
   },
   feedHeader: {
     display: 'flex',

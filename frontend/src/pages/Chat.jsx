@@ -3,12 +3,14 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import chatAPI from '../services/chatAPI';
 import rideAPI from '../services/rideAPI';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotifications } from '../contexts/NotificationContext';
 import { Send, ArrowLeft, Users, AlertCircle, MessageSquare } from 'lucide-react';
 
 const Chat = () => {
   const { rideId } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { addToast } = useNotifications();
 
   const [ride, setRide] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -134,7 +136,7 @@ const Chat = () => {
       setMessages((prev) => [...prev, optimisticMsg]);
       setTypedMessage('');
     } else {
-      alert("Chat connection is offline. Trying to reconnect...");
+      addToast('Offline', 'Chat connection is offline. Trying to reconnect...', 'warning');
     }
   };
 
@@ -219,14 +221,15 @@ const Chat = () => {
                   <div
                     style={{
                       ...styles.bubble,
-                      backgroundColor: isMe ? 'var(--accent-primary)' : 'var(--bg-tertiary)',
+                      background: isMe ? 'var(--accent-gradient)' : 'var(--bg-tertiary)',
+                      color: isMe ? '#fff' : 'var(--text-primary)',
                       borderBottomRightRadius: isMe ? '2px' : '12px',
                       borderBottomLeftRadius: isMe ? '12px' : '2px',
                     }}
                   >
                     {!isMe && <span style={styles.senderName}>{msg.sender_name}</span>}
                     <div style={styles.bubbleContent}>{msg.content}</div>
-                    <span style={styles.bubbleTime}>{time}</span>
+                    <span style={{ ...styles.bubbleTime, color: isMe ? 'rgba(255, 255, 255, 0.6)' : 'var(--text-muted)' }}>{time}</span>
                   </div>
                 </div>
               );
@@ -301,7 +304,7 @@ const styles = {
     textTransform: 'uppercase',
     color: 'var(--text-secondary)',
     fontWeight: 600,
-    backgroundColor: 'rgba(255,255,255,0.02)',
+    backgroundColor: 'var(--card-inner-bg)',
     padding: '0.3rem 0.6rem',
     borderRadius: 'var(--radius-sm)',
     border: '1px solid var(--border-color)',
@@ -353,12 +356,10 @@ const styles = {
   },
   bubbleContent: {
     fontSize: '0.9rem',
-    color: '#fff',
     wordBreak: 'break-word',
   },
   bubbleTime: {
     fontSize: '0.65rem',
-    color: 'rgba(255, 255, 255, 0.5)',
     alignSelf: 'flex-end',
     marginTop: '0.2rem',
   },

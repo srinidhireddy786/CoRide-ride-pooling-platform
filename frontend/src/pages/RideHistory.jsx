@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import rideAPI from '../services/rideAPI';
 import { useAuth } from '../contexts/AuthContext';
 import { History, MapPin, Calendar, IndianRupee, ExternalLink, ShieldCheck } from 'lucide-react';
+import LoadingFacts from '../components/LoadingFacts';
 
 const RideHistory = () => {
   const { user } = useAuth();
@@ -72,11 +73,7 @@ const RideHistory = () => {
   });
 
   if (loading) {
-    return (
-      <div style={styles.loaderContainer}>
-        <div style={styles.spinner} />
-      </div>
-    );
+    return <LoadingFacts fullPage={false} />;
   }
 
   return (
@@ -130,7 +127,7 @@ const RideHistory = () => {
 
       {/* List items */}
       {filteredItems.length === 0 ? (
-        <div className="glass-panel" style={styles.emptyCard}>
+        <div key={activeTab} className="glass-panel animate-fade" style={styles.emptyCard}>
           <History size={36} color="var(--text-muted)" />
           <h4 style={{ marginTop: '1rem' }}>No history records found</h4>
           <p style={{ color: 'var(--text-secondary)', marginTop: '0.4rem', fontSize: '0.9rem' }}>
@@ -138,7 +135,7 @@ const RideHistory = () => {
           </p>
         </div>
       ) : (
-        <div style={styles.list}>
+        <div key={activeTab} style={styles.list} className="animate-fade">
           {filteredItems.map((item) => (
             <div key={item.id} className="glass-panel animate-slide" style={styles.listItem}>
               <div style={styles.mainInfo}>

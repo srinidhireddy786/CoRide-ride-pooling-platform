@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import rideAPI from '../services/rideAPI';
 import RouteMap from '../components/RouteMap';
 import { PlusCircle, MapPin, Calendar, Users, IndianRupee, Award, AlertTriangle, CheckCircle } from 'lucide-react';
+import LoadingFacts from '../components/LoadingFacts';
 
 // Simple JS implementation of Haversine formula
 const localHaversine = (lat1, lon1, lat2, lon2) => {
@@ -286,11 +287,7 @@ const PublishRide = () => {
   };
 
   if (fetchLoading) {
-    return (
-      <div style={styles.loaderContainer}>
-        <div style={styles.spinner} />
-      </div>
-    );
+    return <LoadingFacts fullPage={false} />;
   }
 
   const selectedVehicle = vehicles.find(v => v.id === selectedVehicleId);
@@ -530,7 +527,7 @@ const PublishRide = () => {
                 </div>
 
                 {pricingOption === 'system' && (
-                  <div className="form-group animate-slide" style={{ gridColumn: 'span 2', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '0.2rem', padding: '1rem', background: 'rgba(255,255,255,0.02)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+                  <div className="form-group animate-slide" style={{ gridColumn: 'span 2', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '0.2rem', padding: '1rem', background: 'var(--card-inner-bg)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
                     <div>
                       <label className="form-label" style={{ fontSize: '0.8rem' }}>Fuel Price (₹ / L)</label>
                       <input
@@ -596,17 +593,56 @@ const PublishRide = () => {
             </form>
           </div>
 
-          {/* Right Column: Leaflet Map Route Viewer (Interactive Mode) */}
-          <div style={styles.mapContainer}>
-            <RouteMap
-              mode="interactive"
-              sourceLat={source.lat}
-              sourceLng={source.lng}
-              destinationLat={destination.lat}
-              destinationLng={destination.lng}
-              onChangeCoords={handleMapCoordsChange}
-              height="350px"
-            />
+          {/* Right Column: Leaflet Map Route Viewer & Price Breakdown Card */}
+          <div style={styles.rightCol}>
+            <div style={styles.mapContainer}>
+              <RouteMap
+                mode="interactive"
+                sourceLat={source.lat}
+                sourceLng={source.lng}
+                destinationLat={destination.lat}
+                destinationLng={destination.lng}
+                onChangeCoords={handleMapCoordsChange}
+                height="320px"
+              />
+            </div>
+            
+            {source.lat && destination.lat && selectedVehicle && (
+              <div className="glass-panel dashboard-stat-gradient animate-slide" style={{ marginTop: '1.5rem', padding: '1.5rem' }}>
+                <h4 style={{ color: 'var(--accent-secondary)', marginBottom: '0.8rem', fontSize: '1.05rem', fontFamily: 'var(--font-heading)' }}>Interactive Fare Estimate</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', fontSize: '0.9rem' }}>
+                  <div>
+                    <span style={{ color: 'var(--text-secondary)' }}>Route Distance:</span>
+                    <strong style={{ display: 'block', color: 'var(--text-primary)', marginTop: '0.2rem' }}>{distanceKm.toFixed(1)} km</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--text-secondary)' }}>Vehicle Fuel Type:</span>
+                    <strong style={{ display: 'block', color: 'var(--text-primary)', marginTop: '0.2rem' }}>{selectedVehicle.brand} {selectedVehicle.model} ({selectedVehicle.type === 'car' ? '🚗 Car' : selectedVehicle.type === 'auto' ? '🛺 Auto' : '🏍️ Bike'})</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--text-secondary)' }}>Mileage Rate:</span>
+                    <strong style={{ display: 'block', color: 'var(--text-primary)', marginTop: '0.2rem' }}>{mileage} km / L</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: 'var(--text-secondary)' }}>Fuel Price Rate:</span>
+                    <strong style={{ display: 'block', color: 'var(--text-primary)', marginTop: '0.2rem' }}>₹ {fuelPrice} / L</strong>
+                  </div>
+                </div>
+
+                <div style={{ borderTop: '1px solid var(--border-color)', marginTop: '1rem', paddingTop: '1rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600 }}>Estimated Seat Cost</span>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>({distanceKm.toFixed(1)} km / {mileage} kmL × ₹{fuelPrice}L) / {seatsAvailable} seats</p>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <span style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--success)', fontFamily: 'var(--font-heading)' }}>₹ {finalCost}</span>
+                      <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>per co-passenger</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -637,6 +673,10 @@ const styles = {
     display: 'grid',
     gridTemplateColumns: '1fr 1.2fr',
     gap: '2rem',
+  },
+  rightCol: {
+    display: 'flex',
+    flexDirection: 'column',
   },
   formPanel: {
     padding: '2rem',
